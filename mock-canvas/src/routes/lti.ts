@@ -6,7 +6,6 @@ import { pem2jwk } from "pem-jwk";
 const router = Router();
 
 // The mock uses a hardcoded symmetric secret.
-// Your BFF should verify with the matching public key (or skip verification in dev).
 const PRIVATE_KEY = `-----BEGIN RSA PRIVATE KEY-----
 MIIEpAIBAAKCAQEA0ouKsVLR1k+Bhl/5jWOTfIL363iAs6urbf02hDmj57xJYjP5
 cR+SiR8tfxpPUjeN0qkRF0X9t3x81Gy2oKBB3xnopPdWzAg0cv6l+K+43cOJoTiM
