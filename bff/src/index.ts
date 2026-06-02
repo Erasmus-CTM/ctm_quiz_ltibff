@@ -4,13 +4,24 @@ import { createLtiApp } from "./app";
 const PORT = Number(process.env.PORT ?? 3000);
 
 async function main() {
-  const Lti = await createLtiApp();
+  const Lti: any = await createLtiApp();
 
   console.log("Deploying LTI...");
   await Lti.deploy({ port: PORT });
 
-  console.log("Registering platform...");
+  // In dev/test, always start fresh so platform config changes take effect
+  if (process.env.NODE_ENV !== 'production') {
+    console.log("Dev mode: clearing platform registrations...");
+    const platforms = await Lti.getAllPlatforms();
+    for (const platform of platforms ?? []) {
+      const url = await platform.platformUrl();
+      const clientId = platform.clientId;
+      console.log(`DELETING: ${url}, ??`);
 
+      await Lti.deletePlatform(url, "mock-client-id-12345");
+    }
+  }
+  console.log("Registering platform...");
   await Lti.registerPlatform({
     url: process.env.CANVAS_BASE_URL ?? "http://localhost:3001",
     name: process.env.CANVAS_PLATFORM_NAME ?? "Mock Canvas",

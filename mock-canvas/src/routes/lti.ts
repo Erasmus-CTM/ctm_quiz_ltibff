@@ -2,6 +2,7 @@ import { Router } from "express";
 import { users, courses, assignments } from "../data/seed";
 import jwt from "jsonwebtoken";
 import { pem2jwk } from "pem-jwk";
+import { createPublicKey } from "crypto";
 
 const router = Router();
 
@@ -54,7 +55,12 @@ const JWT_KEY_ID = "mock-key-1"
  * Mock:        POST /lti/authorize
  */
 router.post("/authorize", (req, res) => {
-    const { redirect_uri, state, nonce, login_hint } = req.body;
+    const { redirect_uri, state, login_hint } = req.body;
+
+    const nonce = req.query.nonce;
+    if (typeof nonce !== "string") {
+        return res.status(400).json({ error: "query.nonce is required" });
+    }
 
     if (!redirect_uri) {
         return res.status(400).json({ error: "redirect_uri is required" });
@@ -128,20 +134,16 @@ router.post("/authorize", (req, res) => {
 
 /**
  * JWKS endpoint — BFF fetches this to verify id_token signatures.
- * For HS256 (symmetric) this is a no-op in real life, but we expose it
- * so the BFF URL config works the same way as with real Canvas (RS256 + JWKS).
- *
- * Swap to RS256 + real JWK if you want to fully mirror Canvas behaviour.
  */
 router.get("/jwks", (_req, res) => {
-    const jwk = pem2jwk(PUBLIC_KEY);
+    const publicKey = createPublicKey(PRIVATE_KEY);
+    const jwk = publicKey.export({ format: "jwk" });
     res.json({
         keys: [
             {
-                kty: "RSA",
-                alg: "RS256",
-                k: Buffer.from(PRIVATE_KEY).toString("base64url"),
+                ...jwk,
                 use: "sig",
+                alg: "RS256",
                 kid: "mock-key-1",
             },
         ],

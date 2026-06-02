@@ -41,20 +41,27 @@ export async function createLtiApp() {
     console.log("BODY:", req.body);
     next();
   });
-
   // routes
   lti.app.use("/api", submitRoute());
 
   lti.app.get("/health", (_req, res) => {
     res.json({ ok: true });
   });
-
+  lti.app.get("/debug", (req, res) => {
+    console.log("cookies", req.headers.cookie);
+    console.log("query", req.query);
+    console.log("auth", req.headers.authorization);
+    res.send("ok");
+  });
   // Health should be accesible without auth
   (lti as any).whitelist({ route: '/health', method: 'get' }, { route: '/health', method: 'head' },);
+  (lti as any).whitelist({ route: '/debug', method: 'get' });
 
   // handlers
   lti.onConnect(async (token, _req, res) => {
     console.log("LTI CONNECTION", token);
+    console.log("LTIK:", res.locals.ltik);
+    console.log("locals:", Object.keys(res.locals));
 
     const quizBase = process.env.QUIZ_BASE_URL ?? "http://localhost:5173";
 

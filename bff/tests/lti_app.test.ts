@@ -17,19 +17,19 @@ afterAll(async () => {
 });
 
 describe("Application Boot & Dependencies", () => {
-  it("successfully boots up and serves an unauthenticated health check", async () => {
+  it("serves health check (without authorization)", async () => {
     const res = await request(lti.app).get("/health");
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ ok: true });
   });
 
-  it("has a fully initialized database provider ready", () => {
+  it("has a database provider ready", () => {
     // 1 means MongoDB is successfully connected
     expect(lti.Database.db.readyState).toBe(1);
   });
 
-  it("protects LTI endpoints properly", async () => {
+  it("protects LTI endpoints", async () => {
     // Ensuring the LTI engine is listening on /lti
     const res = await request(lti.app).get("/lti");
 

@@ -6,6 +6,8 @@ export function submitRoute(): Router {
 
   /**
    * POST /api/submit
+   * 
+   * For a dummy exercise.
    *
    * Body: { correct: number, total: number }
    *
@@ -13,7 +15,7 @@ export function submitRoute(): Router {
    * route before the request reaches this handler. No explicit protect() call
    * needed — the validated token is simply available on res.locals.token.
    */
-  router.post("/submit", async (req: Request, res: Response) => {
+  router.post("/submit-dummy", async (req: Request, res: Response) => {
     const token = res.locals.token;
 
     // Validate 
@@ -32,7 +34,7 @@ export function submitRoute(): Router {
     }
 
     // Canvas AGS expects a score in [0, pointsPossible].
-    // We normalise to a percentage (0–100) which maps cleanly to any assignment.
+    // normalize to a percentage
     const scoreGiven = (correct / total) * 100;
     const scoreMaximum = 100;
 
