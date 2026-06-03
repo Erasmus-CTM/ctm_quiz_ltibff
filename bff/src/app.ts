@@ -19,7 +19,7 @@ export async function createLtiApp() {
       loginRoute: "/lti/login",
       sessionTimeoutRoute: "/lti/session-timeout",
       invalidTokenRoute: "/lti/invalid-token",
-      keysetRoute: "/lti/jwks",
+      keysetRoute: "/.well-known/jwks.json",
       cors: true,
       cookies: {
         secure: process.env.NODE_ENV === "production",
@@ -56,6 +56,7 @@ export async function createLtiApp() {
   // Health should be accesible without auth
   (lti as any).whitelist({ route: '/health', method: 'get' }, { route: '/health', method: 'head' },);
   (lti as any).whitelist({ route: '/debug', method: 'get' });
+  (lti as any).whitelist({ route: '/favicon.ico', method: 'get' });
 
   // handlers
   lti.onConnect(async (token, _req, res) => {

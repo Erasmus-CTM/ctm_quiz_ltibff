@@ -10,7 +10,7 @@ import json
 
 
 # Whatever stable domain we have...
-DOMAIN = "https://xxx.ngrok.app"
+DOMAIN = "https://decade-rephrase-resubmit.ngrok-free.dev"
 
 
 tool_cfg = {
