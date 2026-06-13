@@ -11,9 +11,9 @@ declare module "ltijs" {
     authenticationEndpoint: string;
     accesstokenEndpoint: string;
     authConfig:
-      | { method: "JWK_SET"; key: string }
-      | { method: "JWK_KEY"; key: string }
-      | { method: "RSA_KEY"; key: string };
+    | { method: "JWK_SET"; key: string }
+    | { method: "JWK_KEY"; key: string }
+    | { method: "RSA_KEY"; key: string };
   }
 
   export interface LtiSetupOptions {
@@ -100,7 +100,7 @@ declare module "ltijs" {
       ) => void | Promise<void>,
     ): void;
 
-    Grade: Grade;
+    Grade: any;
   }
 
   const Lti: LtiProvider;

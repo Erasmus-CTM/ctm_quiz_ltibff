@@ -5,3 +5,5 @@ dist/
 
 # generated
 registration_cfg.json
+
+.env

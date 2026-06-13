@@ -59,17 +59,3 @@ Response:
 ```json
 { "ok": true, "score": 70, "scoreMaximum": 100, "percentage": "70.0%" }
 ```
-
-## Moving to real Canvas
-
-Update `.env`:
-```
-CANVAS_BASE_URL=https://yourschool.instructure.com
-CANVAS_CLIENT_ID=<from Canvas Developer Key>
-CANVAS_AUTH_ENDPOINT=https://yourschool.instructure.com/api/lti/authorize_redirect
-CANVAS_TOKEN_ENDPOINT=https://yourschool.instructure.com/login/oauth2/token
-CANVAS_JWKS_URL=https://yourschool.instructure.com/api/lti/security/jwks
-```
-
-You'll also need to create a Developer Key in Canvas admin and register your
-BFF's launch URL and redirect URIs there.

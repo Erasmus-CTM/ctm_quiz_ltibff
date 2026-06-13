@@ -22,7 +22,7 @@ async function main() {
     }
   }
   console.log("Registering platform...");
-  await Lti.registerPlatform({
+  const platformCfg = {
     url: process.env.CANVAS_BASE_URL ?? "http://localhost:3001",
     name: process.env.CANVAS_PLATFORM_NAME ?? "Mock Canvas",
     clientId: process.env.CANVAS_CLIENT_ID ?? "mock-client-id-12345",
@@ -37,9 +37,11 @@ async function main() {
       method: "JWK_SET",
       key: process.env.CANVAS_JWKS_URL ?? "http://localhost:3001/lti/jwks",
     },
-  });
+  }
+  await Lti.registerPlatform(platformCfg);
 
-  console.log(`BFF running on http://localhost:${PORT}`);
+  console.log(`BFF running on http://localhost:${PORT}, LMS Platrform config:`);
+  console.log(platformCfg)
 }
 
 main().catch((err) => {

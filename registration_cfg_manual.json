@@ -1,0 +1,35 @@
+{
+  "title": "CTM Quiz BFF - manual",
+  "description": "A simple Backend For Frontend for browser based programming quiz",
+  "oidc_initiation_url": "https://decade-rephrase-resubmit.ngrok-free.dev/lti/login",
+  "target_link_uri": "https://decade-rephrase-resubmit.ngrok-free.dev/lti/launch",
+  "scopes": [
+    "https://purl.imsglobal.org/spec/lti-nrps/scope/contextmembership.readonly",
+    "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem",
+    "https://purl.imsglobal.org/spec/lti-ags/scope/score"
+  ],
+  "extensions": [
+    {
+      "domain": "decade-rephrase-resubmit.ngrok-free.dev",
+      "tool_id": "ctm-quiz-bff-dev",
+      "platform": "canvas.instructure.com",
+      "privacy_level": "public",
+      "settings": {
+        "text": "CTM Quiz",
+        "placements": [
+          {
+            "placement": "assignment_selection",
+            "message_type": "LtiDeepLinkingRequest",
+            "target_link_uri": "https://decade-rephrase-resubmit.ngrok-free.dev/lti/launch?placement=assignment_selection",
+            "text": "CTM Quiz",
+            "custom_fields": {
+              "foo": "bar",
+              "context_id": "$Context.id"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "public_jwk_url": "https://decade-rephrase-resubmit.ngrok-free.dev/.well-known/jwks.json"
+}

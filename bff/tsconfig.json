@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "commonjs",
+    "module": "nodenext",
     "lib": [
       "ES2020"
     ],
@@ -10,14 +10,15 @@
     "typeRoots": [
       "./src/types"
     ],
-    "strict": true,
+    "strict": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true
   },
   "include": [
-    "src/**/*"
-, "../tests"  ],
+    "src/**/*",
+    "../tests"
+  ],
   "exclude": [
     "node_modules",
     "dist"
