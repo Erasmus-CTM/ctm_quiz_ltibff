@@ -1,13 +1,4 @@
-import { Provider as Lti, IdToken } from "ltijs";
-
-interface ScorePayload {
-  scoreGiven: number;
-  scoreMaximum: number;
-  /** Defaults to "completed" */
-  activityProgress?: string;
-  /** Defaults to "FullyGraded" */
-  gradingProgress?: string;
-}
+import { Provider as lti, IdToken } from "ltijs";
 
 /**
  * Post a score back to Canvas using ltijs's built-in AGS helper.
@@ -17,27 +8,35 @@ interface ScorePayload {
  *   - finding the correct lineitem for this resource link
  *   - formatting the Score object per the LTI-AGS spec
  */
-export async function postScore(token: IdToken, payload: ScorePayload): Promise<void> {
-  const {
-    scoreGiven,
-    scoreMaximum,
-    activityProgress = "Completed",
-    gradingProgress = "FullyGraded",
-  } = payload;
-
-  const score = {
-    userId: token.user,
-    scoreGiven,
-    scoreMaximum,
-    activityProgress,
-    gradingProgress,
-    timestamp: new Date().toISOString(),
-  };
-
-  // Grade.scoreGrades() finds the lineitem automatically from the resource link
-  const result = await Lti.Grade.scoreGrades(token, score);
-
-  if (!result) {
-    throw new Error("Canvas AGS returned no result — check lineitem configuration");
+export async function postScore(idToken: IdToken, scoreGiven: number, scoreMaximum: number): Promise<any> {
+  // Creating Grade object
+  const gradeObj = {
+    userId: idToken.user, // needs to be a student on the course
+    scoreGiven: scoreGiven,
+    scoreMaximum: scoreMaximum,
+    activityProgress: 'Completed',
+    gradingProgress: 'FullyGraded'
   }
+
+  // Selecting linetItem ID
+  let lineItemId = idToken.platformContext.endpoint.lineitem // Attempting to retrieve it from idtoken
+  if (!lineItemId) {
+    const response = await lti.Grade.getLineItems(idToken, { resourceLinkId: true })
+    const lineItems = response.lineItems
+    if (lineItems.length === 0) {
+      // Creating line item if there is none
+      console.log('Creating new line item')
+      const newLineItem = {
+        scoreMaximum: 100,
+        label: 'Grade',
+        tag: 'grade',
+        resourceLinkId: idToken.platformContext.resource.id
+      }
+      const lineItem = await lti.Grade.createLineItem(idToken, newLineItem)
+      lineItemId = lineItem.id
+    } else lineItemId = lineItems[0].id
+  }
+
+  // Sending Grade
+  return await lti.Grade.submitScore(idToken, lineItemId, gradeObj)
 }

@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { Provider as lti } from "ltijs";
+import { postScore } from "../canvas/ags";
 
 interface PyExResult {
 
@@ -55,52 +56,9 @@ export function submitRoute(): Router {
       `[submit-dummy] user=${token.user} correct=${correct} total=${total} score=${scoreGiven.toFixed(1)}`
     );
 
-    // try {
-    //   await postScore(token, { scoreGiven, scoreMaximum });
-    //   return res.json({
-    //     ok: true,
-    //     score: scoreGiven,
-    //     scoreMaximum,
-    //     percentage: `${scoreGiven.toFixed(1)}%`,
-    //   });
-    // } catch (err: unknown) {
-    //   console.error("[submit] AGS error:", err);
-    //   return res.status(502).json({ error: "Failed to post score to Canvas" });
-    // }
-
-
     try {
       const idtoken = res.locals.token // IdToken
-      // Creating Grade object
-      const gradeObj = {
-        userId: idtoken.user, // needs to be a student on the course
-        scoreGiven: scoreGiven,
-        scoreMaximum: 100,
-        activityProgress: 'Completed',
-        gradingProgress: 'FullyGraded'
-      }
-
-      // Selecting linetItem ID
-      let lineItemId = idtoken.platformContext.endpoint.lineitem // Attempting to retrieve it from idtoken
-      if (!lineItemId) {
-        const response = await lti.Grade.getLineItems(idtoken, { resourceLinkId: true })
-        const lineItems = response.lineItems
-        if (lineItems.length === 0) {
-          // Creating line item if there is none
-          console.log('Creating new line item')
-          const newLineItem = {
-            scoreMaximum: 100,
-            label: 'Grade',
-            tag: 'grade',
-            resourceLinkId: idtoken.platformContext.resource.id
-          }
-          const lineItem = await lti.Grade.createLineItem(idtoken, newLineItem)
-          lineItemId = lineItem.id
-        } else lineItemId = lineItems[0].id
-      }
-
-      // Sending Grade
-      const responseGrade = await lti.Grade.submitScore(idtoken, lineItemId, gradeObj)
+      const responseGrade = await postScore(idtoken, scoreGiven, scoreMaximum)
       return res.send(responseGrade)
     } catch (err) {
       console.error("[submit] AGS error:", err.message);
@@ -126,19 +84,19 @@ export function submitRoute(): Router {
       console.log(b);
     }
 
-    // parsing the schema from quiz 
+
+
+    // Simple score computation (percentage of passed tests)
 
     let correct = 0;
     let total = 0;
-
-
-
     b.exercises.forEach(e => {
       correct += e.result?.passed ?? 0;
       total += e.result?.total ?? 1;
     });
 
     const scoreGiven = (correct / total) * 100;
+    const scoreMaximum = 100;
 
     console.log(
       `[submit] user=${token.user} correct=${correct} total=${total} score=${scoreGiven.toFixed(1)}`
@@ -147,36 +105,7 @@ export function submitRoute(): Router {
 
     try {
       const idtoken = res.locals.token // IdToken
-      // Creating Grade object
-      const gradeObj = {
-        userId: idtoken.user, // needs to be a student on the course
-        scoreGiven: scoreGiven,
-        scoreMaximum: 100,
-        activityProgress: 'Completed',
-        gradingProgress: 'FullyGraded'
-      }
-
-      // Selecting linetItem ID
-      let lineItemId = idtoken.platformContext.endpoint.lineitem // Attempting to retrieve it from idtoken
-      if (!lineItemId) {
-        const response = await lti.Grade.getLineItems(idtoken, { resourceLinkId: true })
-        const lineItems = response.lineItems
-        if (lineItems.length === 0) {
-          // Creating line item if there is none
-          console.log('Creating new line item')
-          const newLineItem = {
-            scoreMaximum: 100,
-            label: 'Grade',
-            tag: 'grade',
-            resourceLinkId: idtoken.platformContext.resource.id
-          }
-          const lineItem = await lti.Grade.createLineItem(idtoken, newLineItem)
-          lineItemId = lineItem.id
-        } else lineItemId = lineItems[0].id
-      }
-
-      // Sending Grade
-      const responseGrade = await lti.Grade.submitScore(idtoken, lineItemId, gradeObj)
+      const responseGrade = await postScore(idtoken, scoreGiven, scoreMaximum)
       return res.send(responseGrade)
     } catch (err) {
       console.error("[submit] AGS error:", err.message);

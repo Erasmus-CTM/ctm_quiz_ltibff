@@ -3,6 +3,7 @@ import express from "express";
 import { submitRoute } from "./routes/submit";
 import path from "path";
 import { readFileSync } from "fs";
+import { injectDisclaimer, injectLtik } from "./content_inject";
 
 /**
  * Handle all setup for the Lti app.
@@ -11,7 +12,7 @@ import { readFileSync } from "fs";
 export async function createLtiApp() {
   console.log("Creating LTI app");
   const bffUrl = process.env.BFF_BASE_URL;
-  console.assert(bffUrl)
+  console.assert(bffUrl, "needs env.BFF_BASE_URL")
 
   lti.setup(
     process.env.LTI_KEY ?? "DUMMY_KEY",
@@ -30,6 +31,7 @@ export async function createLtiApp() {
         sameSite: "None",
       },
       devMode: process.env.NODE_ENV !== "production",
+      // dynamic registration is probably (?) supported by Canvas. Maybe it's better in the long run.
       // dynReg: {
       //   url: bffUrl,
       //   name: "CTM Quiz BFF",
@@ -92,27 +94,16 @@ export async function createLtiApp() {
       </body></html>
     `);
     }
-    // else show student UI (dummy)
-    // res.send(`
-    //   <h2>The quiz!</h2>
-    //   <form method="POST" action="/lti/api/submit-dummy?ltik=${ltik}">
-    //   <p>What is 1+1?</p>
-    //   <input name="correct" type="number"/>
-    //   /<input name="total" type="number"/>
-    //   <button>submit</button>
-    //   </form>
-    //   `);
+
     // else show student UI (quarto quiz)
 
     const QUIZ_HTML = path.resolve(process.env.QUIZ_HTML_PATH ?? "./quiz.html");
 
     let html = readFileSync(QUIZ_HTML, "utf-8");
     // prepare where to send results
-    const submitUrl = `/lti/api/submit?ltik=${ltik}`
-    html = html.replace("__LTI_PLACEHOLDER__", submitUrl);
-
+    html = injectLtik(html, ltik)
+    html = injectDisclaimer(html)
     return res.send(html);
-
   });
 
 
@@ -145,9 +136,6 @@ export async function createLtiApp() {
     return res.redirect(
       `/lti/launch/?context=${contextId}&resource=${resourceId}`,
     );
-    // return res.redirect(
-    //   `${quizBase}/?context=${contextId}&resource=${resourceId}`,
-    // );
   });
 
   // This route is hit by the teacher's form submission.

@@ -16,7 +16,7 @@ DOMAIN = "https://decade-rephrase-resubmit.ngrok-free.dev"
 
 config = {
     # Name shown to administrators
-    "title": "CTM Quiz BFF - manual",
+    "title": "CTM Quiz BFF",
     "description": "A simple Backend For Frontend for browser based programming quiz",
     # Where should canvas initiate LTI launch
     "oidc_initiation_url": f"{DOMAIN}/lti/login",
@@ -43,7 +43,7 @@ config = {
                         "message_type": "LtiDeepLinkingRequest",
                         "target_link_uri": f"{DOMAIN}/lti/launch?placement=assignment_selection",
                         "text": "CTM Quiz",
-                        "custom_fields": {"foo": "bar", "context_id": "$Context.id"},
+                        "custom_fields": {"context_id": "$Context.id"},
                     }
                 ],
             },

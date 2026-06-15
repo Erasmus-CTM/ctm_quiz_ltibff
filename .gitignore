@@ -4,6 +4,6 @@ dist/
 
 
 # generated
-registration_cfg.json
+registration_cfg_manual.json
 
 .env
