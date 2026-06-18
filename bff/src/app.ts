@@ -2,8 +2,44 @@ import { Provider as lti } from "ltijs";
 import express from "express";
 import { submitRoute } from "./routes/submit";
 import path from "path";
-import { readFileSync } from "fs";
-import { injectDisclaimer, injectLtik } from "./content_inject";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { injectDisclaimer, injectLtikSubmitUrl } from "./content_inject";
+import multer, { diskStorage } from "multer";
+import fs from "fs";
+
+
+// Make sure the directory exists once at startup
+const quizzesDir = path.resolve(process.cwd(), "quizzes");
+fs.mkdirSync(quizzesDir, { recursive: true });
+
+const upload = multer({
+  storage: multer.memoryStorage(), // keep file in memory, then we write it ourselves
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5 MB, adjust as needed
+  },
+  fileFilter: (_req, file, cb) => {
+    // Prefer checking both mimetype and extension
+    const okMime = file.mimetype === "text/html";
+    const okExt = file.originalname.toLowerCase().endsWith(".html");
+
+    if (okMime || okExt) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only HTML files are allowed"));
+    }
+  },
+});
+
+function sanitizeQuizId(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+
+  const quizId = value.trim();
+
+  // Keep it simple and safe: letters, digits, underscore, dash only
+  if (!/^[A-Za-z0-9_-]+$/.test(quizId)) return null;
+
+  return quizId;
+}
 
 /**
  * Handle all setup for the Lti app.
@@ -53,6 +89,7 @@ export async function createLtiApp() {
       console.log(req.method, req.url);
       console.log(req.headers);
       console.log("BODY:", req.body);
+      // console.log("token:", _res.locals.token);
     }
     next();
   });
@@ -64,44 +101,39 @@ export async function createLtiApp() {
   });
 
 
-  lti.app.get("/lti/launch", (_req, res) => {
+  lti.app.get("/lti/launch", (req, res) => {
     // This is called when adding the tool to an assignment
     // GET /lti/launch?placement=assignment_selection&...
     // We need to return some teacher-ui
     const ltik = res.locals.ltik;
-    const placement = _req.query.placement ?? "";
+    const placement = req.query.placement ?? "";
 
     // e.g. placement === "course_navigation" vs "assignment" etc.
     console.log("Launch placement:", placement);
-
     if (placement == "assignment_selection") {
       // Show teacher UI
+      let html = readFileSync("./pages/teacher_setup.html", "utf-8");
+      html = html.replace("__LTI_PLACEHOLDER__", ltik)
 
-      return res.send(`
-      <html><body>
-        <h2>Select a quiz to add</h2>
-        <form method="POST" action="/lti/deep-link-confirm?ltik=${ltik}">
-          <label>
-            Quiz ID:
-            <input name="quizId" value="quiz-001" required />
-          </label>
-          <label>
-            Title:
-            <input name="title" value="My Quiz" required />
-          </label>
-          <button type="submit">Add to assignment</button>
-        </form>
-      </body></html>
-    `);
+      // which quizzes exist?
+      const exist = fs.readdirSync(quizzesDir)
+      html = html.replace("__QUIZZES_PLACEHOLDER__", exist.length ? exist.map((s) => s.replace(/\.html/, "")).join("\n") : "Nothing")
+      return res.send(injectDisclaimer(html));
     }
 
     // else show student UI (quarto quiz)
+    // which quiz is requested?
+    const qIdRaw = res.locals.token.platformContext.custom.quizId;
+    if (!qIdRaw) {
+      return res.status(400).json({ error: "Invalid or missing quizId" });
+    }
 
-    const QUIZ_HTML = path.resolve(process.env.QUIZ_HTML_PATH ?? "./quiz.html");
+    const quizId = sanitizeQuizId(qIdRaw);
+    const filepath = path.join(quizzesDir, `${quizId}.html`);
 
-    let html = readFileSync(QUIZ_HTML, "utf-8");
+    let html = readFileSync(path.resolve(filepath), "utf-8");
     // prepare where to send results
-    html = injectLtik(html, ltik)
+    html = injectLtikSubmitUrl(html, ltik)
     html = injectDisclaimer(html)
     return res.send(html);
   });
@@ -139,30 +171,70 @@ export async function createLtiApp() {
   });
 
   // This route is hit by the teacher's form submission.
-  lti.app.post("/lti/deep-link-confirm", async (req: any, res: any) => {
-    const { quizId, title } = req.body;
-    const domain = process.env.BFF_BASE_URL ?? "http://localhost:3000";
+  lti.app.post(
+    "/lti/deep-link-confirm",
+    upload.single("quizFile"), // form field name must be
+    async (req: any, res: any) => {
+      let msg = "unknown error";
+      try {
+        const quizId = sanitizeQuizId(req.body?.quizId);
 
-    const items = [
-      {
-        type: "ltiResourceLink",
-        title: title ?? "Quiz",
-        url: `${domain}/lti/launch`,           // ltijs main route — triggers onConnect
-        custom: { quizId },             // passed back to you at launch time
-      },
-    ];
+        if (!quizId) {
+          return res.status(400).json({ error: "Invalid or missing quizId" });
+        }
 
-    // res.locals.token is populated by ltijs because ltik was in the query
-    const form = await (lti as any).DeepLinking.createDeepLinkingForm(
-      res.locals.token,
-      items,
-      { message: "Quiz added successfully" },
-    );
+        if (!req.file) {
+          return res.status(400).json({ error: "No HTML file uploaded" });
+        }
 
-    // This is an auto-submitting form that POSTs the JWT back to Canvas
-    return res.send(form);
-  });
+        const filepath = path.join(quizzesDir, `${quizId}.html`);
 
+        if (existsSync(filepath)) {
+          console.log("Reusing existing quiz:", quizId);
+          msg = "Reusing existing quiz";
+        } else {
+          if (!req.file) {
+            return res.status(400).json({
+              error: `Quiz '${quizId}' does not exist and no file was uploaded`,
+            });
+          }
+
+          await fs.promises.writeFile(filepath, req.file.buffer, {
+            flag: "wx",
+          });
+
+          console.log("File saved successfully:", quizId);
+          msg = "Quiz uploaded successfully";
+        }
+
+        // === LTI stuff ===
+
+        const domain = process.env.BFF_BASE_URL ?? "http://localhost:3000";
+
+        const items = [
+          {
+            type: "ltiResourceLink",
+            title: quizId,
+            url: `${domain}/lti/launch`,
+            custom: { quizId },
+          },
+        ];
+
+        // res.locals.token is populated by ltijs because ltik was in the query
+        const form = await (lti as any).DeepLinking.createDeepLinkingForm(
+          res.locals.token,
+          items,
+          { message: msg },
+        );
+
+        // This is an auto-submitting form that POSTs the JWT back to Canvas
+        return res.send(form);
+      } catch (err) {
+        console.error("Upload failed:", err);
+        return res.status(500).json({ error: "Upload failed" });
+      }
+    }
+  );
 
   (lti as any).onDeepLinking(async (token: any, req: any, res: any) => {
     console.log('Deep linking launch success')

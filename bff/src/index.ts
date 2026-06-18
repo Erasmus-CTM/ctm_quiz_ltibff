@@ -40,7 +40,7 @@ async function main() {
   }
   await Lti.registerPlatform(platformCfg);
 
-  console.log(`BFF running on http://localhost:${PORT}, LMS Platrform config:`);
+  console.log(`BFF running on http://localhost:${PORT}, LMS Platform config:`);
   console.log(platformCfg)
 }
 

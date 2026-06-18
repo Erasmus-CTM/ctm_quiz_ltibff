@@ -2,7 +2,7 @@
 
 
 export function injectDisclaimer(html: string): string {
-    let text = "This backend is a PROOF OF CONCEPT. Please review it and see the README.md.";
+    let text = "This backend is a PROOF OF CONCEPT. Please review it before real use. And see the README.md.";
     const nodeEnv = process.env.NODE_ENV
     text += ` it is running with NODE_ENV ${nodeEnv}`;
     // inject disclaimer at top of body
@@ -11,7 +11,7 @@ export function injectDisclaimer(html: string): string {
 
 }
 
-export function injectLtik(html: string, ltik: string): string {
+export function injectLtikSubmitUrl(html: string, ltik: string): string {
     const submitUrl = `/lti/api/submit?ltik=${ltik}`
     return html.replace("__LTI_PLACEHOLDER__", submitUrl);
 }

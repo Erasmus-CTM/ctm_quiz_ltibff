@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <style>
+        form>* {
+            display: block;
+            margin: 2em;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Select a quiz to add</h2>
+    <p>
+        Can reuse an uploaded quiz (just specify id) or upload a new quiz (as of now, needs to be generated with the LTI
+        branch of py-exercise)
+    </p>
+    <p>
+        To try the quiz after upload, it needs to be published and opened in "student view".
+    </p>
+    <form method="POST" enctype="multipart/form-data" action="/lti/deep-link-confirm?ltik=__LTI_PLACEHOLDER__">
+        <label>
+            Quiz ID (needs to be unique):
+            <input name="quizId" value="quiz-001" required />
+        </label>
+        <label>
+            File (generated .html):
+            <input name="quizFile" type="file" accept=".html,text/html" />
+        </label>
+        <button type="submit">Upload as assignment.</button>
+    </form>
+
+    <h2>Already uploaded</h2>
+    <pre>__QUIZZES_PLACEHOLDER__</pre>
+</body>
+
+</html>

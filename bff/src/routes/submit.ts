@@ -106,6 +106,10 @@ export function submitRoute(): Router {
     try {
       const idtoken = res.locals.token // IdToken
       const responseGrade = await postScore(idtoken, scoreGiven, scoreMaximum)
+      console.log("RESPONSE GRADE");
+      console.log(responseGrade);
+
+
       return res.send(responseGrade)
     } catch (err) {
       console.error("[submit] AGS error:", err.message);

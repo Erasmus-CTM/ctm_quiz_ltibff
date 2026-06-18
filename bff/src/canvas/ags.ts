@@ -32,10 +32,20 @@ export async function postScore(idToken: IdToken, scoreGiven: number, scoreMaxim
         tag: 'grade',
         resourceLinkId: idToken.platformContext.resource.id
       }
+      console.log("NEW LINE ITEM");
+      console.log(JSON.stringify(newLineItem));
       const lineItem = await lti.Grade.createLineItem(idToken, newLineItem)
       lineItemId = lineItem.id
-    } else lineItemId = lineItems[0].id
+    } else {
+      console.log("FOUND LINE ITEM");
+      console.log(JSON.stringify(lineItems[0]));
+
+      lineItemId = lineItems[0].id
+    }
   }
+  console.log("GRADE OBJ");
+  console.log(JSON.stringify(gradeObj));
+
 
   // Sending Grade
   return await lti.Grade.submitScore(idToken, lineItemId, gradeObj)
