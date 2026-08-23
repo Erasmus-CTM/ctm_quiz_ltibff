@@ -2,9 +2,9 @@ import { Provider as lti } from "ltijs";
 import express from "express";
 import { submitRoute } from "./routes/submit";
 import path from "path";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { injectDisclaimer, injectLtikSubmitUrl } from "./content_inject";
-import multer, { diskStorage } from "multer";
+import multer from "multer";
 import fs from "fs";
 
 

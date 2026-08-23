@@ -1,5 +1,4 @@
 import { Router, Request, Response } from "express";
-import { Provider as lti } from "ltijs";
 import { postScore } from "../canvas/ags";
 
 interface PyExResult {
@@ -18,7 +17,7 @@ export function submitRoute(): Router {
 
   /**
    * POST /api/submit
-   * 
+   *
    * For a dummy exercise.
    *
    * Body: { correct: number, total: number }
@@ -30,7 +29,7 @@ export function submitRoute(): Router {
   router.post("/submit-dummy", async (req: Request, res: Response) => {
     const token = res.locals.token;
 
-    // Validate 
+    // Validate
     const b = req.body as { correct?: unknown; total?: unknown };
     const correct = Number(b.correct)
     const total = Number(b.total)
@@ -76,7 +75,7 @@ export function submitRoute(): Router {
     const token = res.locals.token;
     console.log("content-type:", req.headers["content-type"]);
     console.log("body type:", typeof req.body);
-    // Validate 
+    // Validate
     const b = req.body as PyExerciseSubmission
 
     if (!b.exercises) {
