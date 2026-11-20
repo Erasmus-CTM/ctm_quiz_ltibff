@@ -255,12 +255,13 @@ export async function createLtiApp() {
     return res.status(401).send(e);
   });
   (lti as any).onUnregisteredPlatform((req: Request, res: any) => {
-    console.log("Unregistered platform  @" + req.url);
+    const msg = "Unregistered platform  @" + req.url;
+    console.log(msg);
     const b = req.body;
     // add more info
     // e.method = req.method;
     console.log(b);
-    return res.status(400).send({ "body": b });
+    return res.status(400).send({ "msg": msg, "body": b });
   });
 
   return lti;
