@@ -2,9 +2,9 @@ import { Provider as lti } from "ltijs";
 import express from "express";
 import { submitRoute } from "./routes/submit";
 import path from "path";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { injectDisclaimer, injectLtikSubmitUrl } from "./content_inject";
-import multer, { diskStorage } from "multer";
+import multer from "multer";
 import fs from "fs";
 
 
@@ -255,12 +255,13 @@ export async function createLtiApp() {
     return res.status(401).send(e);
   });
   (lti as any).onUnregisteredPlatform((req: Request, res: any) => {
-    console.log("Unregistered platform  @" + req.url);
+    const msg = "Unregistered platform  @" + req.url;
+    console.log(msg);
     const b = req.body;
     // add more info
     // e.method = req.method;
     console.log(b);
-    return res.status(400).send({ "body": b });
+    return res.status(400).send({ "msg": msg, "body": b });
   });
 
   return lti;
